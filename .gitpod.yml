@@ -1,0 +1,12 @@
+image:
+  file: .gitpod.Dockerfile
+
+# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
+tasks:
+  - init: pip install -r requirements.txt # runs during prebuild, https://blog.knoldus.com/simple-ways-to-create-gitpod-workspace-in-github/
+    command: echo 'installing libraries'
+
+# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+ports:
+  - port: 3000
+    onOpen: open-preview
