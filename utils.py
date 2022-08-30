@@ -81,7 +81,7 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     list_tuple_season_stat = [] # list to store tuples
     # 
     list_tuple_season_stat.append( ('POS_FIBA', df_teams.eval('POS.sum()')) )
-    # list_tuple_season_stat.append( ('POS_ESTIMATE', df_teams.eval('`1PTM`.sum() + `2PTM`.sum() + TO.sum() + DREB.sum() + (1-FTES.sum()/FTA,sum())*FTM.sum()') ) )
+    list_tuple_season_stat.append( ('POS_ESTIMATE', df_teams['1PTM'].sum() + df_teams['2PTM'].sum() + df_teams.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') ) )
     
     # box score stats
     list_tuple_season_stat.append( ('POSPG', df_teams.eval('POS.sum() / GP.sum()')) )
