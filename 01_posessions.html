@@ -14601,38 +14601,96 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 $$ POS_{FIBA} = 1PTA + 2PTA + FTA - (FT-ES) + TO$$<p>This definition of possessions overcounts the number of times a team actually has control of the ball by not taking into account offensive rebounds and free throws resulting from fouled successful field goal attempts. Furthermore, it is possible for two teams playing against each other to have greatly different number of possessions which is a major difference to how possessions are accounted for in full court basketball.</p>
 <p>Consider this example where team A controls possession of the ball for the entire game by missing all $k$ shots and getting all $k$ possible offensive rebounds where $k$ is an arbitrary positive integer. Team B will end the game with $0$ possessions while team A will have had $k$ possessions. Common sense should dictate that both teams have within +/- 1 the number of possessions from each other.</p>
 <p>An alternative approach to count the number of possessions in a game would be to count the number of times a team is able to obtain the ball as a result of the other team making a shot withing the arc (1PTM), making a shot outside the arc (2PTM), making a free throw (FTM) minus made free throws from extra free throw shots (FT-ES), missing a shot (DREB) or a turnover (TO).</p>
-<br/>
 <p>$$POS_{alternative} = 1PTM_{opp} + 2PTM_{opp} + FTM_{opp} - FTM_{FT-ES_{opp}} + TO_{opp} + DREB_{self} $$</p>
 <p>This is possible to compute from play-by-play data and box scores if FT-ES are included. Ideally, both teams in a game should have within +/- 1 the number of possessions from each other using this approach. A comparison of FIBA's defintion of possession and the aforementioned alternative is presented below for three games in which the number of possessions for each team is determined from the play-by-play.</p>
-<br/>
-<p>| Team A  	| Team B    	| Team A # Possessions 	| Team B # Possessions 	| Team A # Possessions (FIBA) 	| Team B # Possessions (FIBA) 	| Team A # Possessions (alternate) 	| Team B # Possessions (alternate) 	| Game Link 	| Box score link 	|
-|---------	|-----------	|----------------------	|----------------------	|-----------------------------	|-----------------------------	|----------------------------------	|----------------------------------	|-----------	|----------------	|
-| Liman   	| Jeddah    	| 28                   	| 28                   	| 37                          	| 34                          	| 28                               	| 28                               	|     <a href="https://www.youtube.com/watch?v=V3P1u-si8m0">Link</a>        	|           <a href="https://worldtour.fiba3x3.com/2022/lausanne/games/bc33b933-0f88-49d5-a3fc-d812e0b1ca53">Lausanne Master 2022</a>      	|
-| Antwerp 	| Amsterdam 	| 27                   	| 26                   	| 30                          	| 31                          	| 26                               	| 26                               	|      <a href="https://www.youtube.com/watch?v=a3FBz-fDNW0">Link</a>     	|          <a href="https://worldtour.fiba3x3.com/2022/debrecen/games/324362ca-ce6d-4b2e-b60f-58ff80477b41/box-score">Debrecen Master 2022</a> |
-| Ub      	| Hamburg   	| 31                   	| 31                   	| 40                          	| 36                          	| 31                               	| 31                               	|      <a href="https://www.youtube.com/watch?v=b6rQ2BeI1ik">Link</a>     	|       <a href="https://worldtour.fiba3x3.com/2022/prague/games/b7c2a45d-e2fc-4b8d-a450-01c38ef0c62d/box-score">Prague Master 2022</a>         	|</p>
-<br>
+<p>| Team A  | Team B    | Team A # Possessions | Team B # Possessions | Team A # Possessions (FIBA) | Team B # Possessions (FIBA) | Team A # Possessions (alternate) | Team B # Possessions (alternate) | Game Link                                           | Box score link                                                                                                           |
+|---------|-----------|----------------------|----------------------|-----------------------------|-----------------------------|----------------------------------|----------------------------------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Liman   | Jeddah    | 28                   | 28                   | 37                          | 34                          | 28                               | 28                               | <a href="https://www.youtube.com/watch?v=V3P1u-si8m0">Link</a> | <a href="https://worldtour.fiba3x3.com/2022/lausanne/games/bc33b933-0f88-49d5-a3fc-d812e0b1ca53">Lausanne Master 2022</a>           |
+| Antwerp | Amsterdam | 27                   | 26                   | 30                          | 31                          | 26                               | 26                               | <a href="https://www.youtube.com/watch?v=a3FBz-fDNW0">Link</a> | <a href="https://worldtour.fiba3x3.com/2022/debrecen/games/324362ca-ce6d-4b2e-b60f-58ff80477b41/box-score">Debrecen Master 2022</a> |
+| Ub      | Hamburg   | 31                   | 31                   | 40                          | 36                          | 31                               | 31                               | <a href="https://www.youtube.com/watch?v=b6rQ2BeI1ik">Link</a> | <a href="https://worldtour.fiba3x3.com/2022/prague/games/b7c2a45d-e2fc-4b8d-a450-01c38ef0c62d/box-score">Prague Master 2022</a>     |</p>
 <p>The number of total possessions in a season from the <a href="https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2022/ProCircuitMen/FIBA_3x3_Pro_Circuit_Stats_After_016_Events.xlsx">pro circuit stats</a> can be computed as</p>
 $$POS_{alternative} = 1PTM + 2PTM + FTM - FTM_{FT-ES} + TO + DREB $$<p>However, since made free throws from extra shot free throws are not included in the pro circuit stats, an estimation for the number of made free throws from extra shot free throws have to be made using the FT% and number of extra shot free throws.</p>
 $$
-\begin{align}
+\begin{align*}
 POS_{estimate} &amp;= 1PTM + 2PTM + FTM - [FT\% \times (FT-ES)] + TO + DREB \\ \\
 &amp;= 1PTM + 2PTM + FTM \times \left(1  - \frac{FT-ES}{FTA}\right) + TO + DREB \\
-\end{align}
-$$
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+\end{align*}
+$$<h3 id="Why-does-it-matter?">Why does it matter?<a class="anchor-link" href="#Why-does-it-matter?">&#182;</a></h3><p>Per game stats are <a href="https://www.basketballscience.net/explanations/context-is-key-stats-per-game-is-misleading">misleading</a>. Unless the comparison is something such as wins before limit per game (number of wins before the full 10 min) or wins per game (win%), one should normalize team and player stats by possessions before making comparisons. Since FIBA's definition of possessions overcounts the actual number of possessions in a game, the better teams on the world tour which tend to play more games would have more possessions than in reality. Normalizing team and player stats with inflated possession counts will lead to <a href="https://en.wikipedia.org/wiki/Bias_(statistics)">statistical bias</a> and render comparisons using such normalized stats to be inaccurate.</p>
 
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.express</span> <span class="k">as</span> <span class="nn">px</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iris</span><span class="p">()</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s2">"sepal_width"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">"sepal_length"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"species"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s1">'petal_length'</span><span class="p">,</span> <span class="n">hover_data</span><span class="o">=</span><span class="p">[</span><span class="s1">'petal_width'</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+
+
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
 </div>
 </body>
 
