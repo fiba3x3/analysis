@@ -3,8 +3,6 @@ from scipy import stats
 import numpy as np
 import pandas as pd
 
-#def test():
-#    return 1
 
 def advanced_stats(df_teams: pd.DataFrame) -> pd.DataFrame:
     """
@@ -33,7 +31,9 @@ def advanced_stats(df_teams: pd.DataFrame) -> pd.DataFrame:
                             "FT-ES" : "FTES"
                         }, inplace=True
                     )
-    df_teams['POS'] = df_teams.eval('GP * POSPG') # over counting real number of possessions
+    
+    # additional count stats
+    df_teams['POS'] = df_teams.eval('GP * POSPG') # FIBA version over counting real number of possessions
     df_teams['FGA'] = (df_teams['2PTA'] + df_teams['1PTA']) # total field goals attempt
     df_teams['FGM'] = (df_teams['2PTM'] + df_teams['1PTM']) # total field goals made
     
@@ -41,6 +41,7 @@ def advanced_stats(df_teams: pd.DataFrame) -> pd.DataFrame:
     df_teams['OREB%'] = df_teams.eval('OREB / (FGA-FGM + (FTA-FTM)*(1-FTES/FTA))') # need to account for technical free throws, cannot compute DREB%
     df_teams['WBLGP'] = df_teams.eval('WBL / GP') # FTA per fouled
 
+    # KAS 
     df_teams['KASTO'] = df_teams.eval('KAS / TO')
     df_teams['KASFGM'] = df_teams.eval('KAS / FGM') # key assist to made shot ratio
     
@@ -78,8 +79,25 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     """
     Compute season advanced stats
     """
-    list_tuple_season_stat = [] # list to store tuples
-    # 
+    df_teams.rename(columns={"PTA1":"1PTA", 
+                        "PT1" : "1PTM",
+                        "PTA2":"2PTA",
+                        "PT2":"2PTM",
+                        "FT":"FTM",
+                        "PT1Percentage":"1PT%",
+                        "PT2Percentage" : "2PT%",
+                        "FTPercentage" : "FT%",
+                        "FT-ES" : "FTES"
+                    }, inplace=True
+    )
+    list_tuple_season_stat = [] # list to store tuples of stat name and stat
+
+    # count stats
+    df_teams['POS'] = df_teams.eval('GP * POSPG') # FIBA over counting real number of possessions
+    df_teams['FGA'] = df_teams['2PTA'] + df_teams['1PTA'] # total field goals attempt
+    df_teams['FGM'] = df_teams['2PTM'] + df_teams['1PTM']# total field goals made
+    
+    list_tuple_season_stat.append( ('GP', df_teams.eval('GP.sum()')/2) )
     list_tuple_season_stat.append( ('POS_FIBA', df_teams.eval('POS.sum()')) )
     list_tuple_season_stat.append( ('POS_ESTIMATE', df_teams['1PTM'].sum() + df_teams['2PTM'].sum() + df_teams.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') ) )
     
@@ -123,7 +141,7 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     
     list_tuple_season_stat.append( ('FTESFTA', df_teams.eval('FTES.sum() / FTA.sum()') ) ) # extra FTA per FTA
     
-    # assist
+    # key assist
     list_tuple_season_stat.append( ('KASTO', df_teams.eval('KAS.sum() / TO.sum()')) )
     list_tuple_season_stat.append( ('KASFGM', df_teams.eval('KAS.sum() / FGM.sum()')) )
     
@@ -132,6 +150,7 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     return df
 
 def player_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
+    
     """
     Compute season advanced stats
     """
@@ -143,6 +162,8 @@ def player_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     df['DRV1PTM'] = df.eval('DRV / 1PTM')
     
     return df
+
+
 def corr_annotation(x : np.array, y : np.array) -> str:
     """
     Compute pearson correlation coefficient and p-value
