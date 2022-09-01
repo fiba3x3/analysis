@@ -1,10 +1,33 @@
 # This file contains utility functions
+from typing import List
 from scipy import stats
 import numpy as np
 import pandas as pd
 
+# dictionary of year to url
+dict_worldtour = {
+    2022: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2022/WorldTour/FIBA_3x3_WT_Tour_Stats_After_005_Events.xlsx', 
+    2021: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2021/WorldTour/FIBA_3x3_WT_Tour_Stats_After_008_Events.xlsx',
+    2020: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2020/WorldTour/FIBA3x3_WT2020_Tour_Statistics_Post-Final.xlsx',
+    2019: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2019/WorldTour/FIBA_3x3_WT_Tour_Stats_2019_update04-12-2020.xlsx',
+    2018: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2018/WorldTour/Tour_Team_Statistics.xlsx',
+    1520: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2020/WorldTour/FIBA3x3%20_WT_Tour_Stats_2015-2020.xlsx' # 2015-2020 world tour stats
+} 
 
-def advanced_stats(df_teams: pd.DataFrame) -> pd.DataFrame:
+# no challenger stats before 2019, no challenger in 2020
+dict_procircuit = {
+    2022: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2022/ProCircuitMen/FIBA_3x3_Pro_Circuit_Stats_After_016_Events.xlsx',
+    2021: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2021/ProCircuitMen/FIBA_3x3_Pro_Circuit_Stats_After_014_Events.xlsx',
+    2019: 'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2019/WorldTour/FIBA_3x3_Pro_Circuit_Stats_2019_update04-12-2020.xlsx'
+}
+
+dict_womenseries = {
+    2022:'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2022/WomensSeries/FIBA_3x3_WS_Tour_Stats_After_010_Events.xlsx',
+    2021:'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2021/WomensSeries/FIBA_3x3_WS_Tour_Stats.xlsx',
+    2019:'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2019/WomensSeries/FIBA3x3_Womens_Series_2019_Team_and_Player_Stats_Season_2019.xlsx'
+}
+
+def advanced_stats(df_teams: pd.DataFrame, season:int = 0) -> pd.DataFrame:
     """
     Compute advanced stats for teams 
     
@@ -72,6 +95,7 @@ def advanced_stats(df_teams: pd.DataFrame) -> pd.DataFrame:
     df_teams['FTMTFA'] = df_teams.eval('FTM / TFA') # free throw made to fouled ratio
     
     df_teams['FTESFTA'] = df_teams.eval('FTES / FTA') # extra FT per FTA
+    df_teams['season'] = season
     
     return df_teams
 
@@ -163,6 +187,43 @@ def player_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     
     return df
 
+def make_df_multiple_season_stat(dict_:dict, seasons:List[int], tour_type:str) -> pd.DataFrame:
+    """
+    Helper function to make dataframe for multiple seasons' stats
+    """
+    list_season_stats = []
+    for season in seasons:
+        dict_df = pd.read_excel(dict_[season], None)
+        if season == 2019 and tour_type in['Pro Circuit', 'World Tour']:
+            df_team = dict_df['Team']
+        elif season == 2019:
+            df_team = dict_df['WS 2019 - Teams']
+        else:
+            df_team = dict_df['Teams']
+        list_season_stats.append(season_stats(df_team, season))
+        
+    df = pd.concat(list_season_stats)
+    df['type'] = tour_type
+    return df
+
+def make_df_multiple_season_team_advanced_stat(dict_:dict, seasons:List[int], tour_type:str) -> pd.DataFrame:
+    """
+    Helper function to make dataframe for multiple seasons' team advanced stats
+    """
+    list_season_stats = []
+    for season in seasons:
+        dict_df = pd.read_excel(dict_[season], None)
+        if season == 2019 and tour_type in['Pro Circuit', 'World Tour']:
+            df_team = dict_df['Team']
+        elif season == 2019:
+            df_team = dict_df['WS 2019 - Teams']
+        else:
+            df_team = dict_df['Teams']
+        list_season_stats.append(advanced_stats(df_team, season))
+        
+    df = pd.concat(list_season_stats)
+    df['type'] = tour_type
+    return df
 
 def corr_annotation(x : np.array, y : np.array) -> str:
     """
