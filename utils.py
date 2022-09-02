@@ -56,7 +56,7 @@ def advanced_stats(df_teams: pd.DataFrame, season:int = 0) -> pd.DataFrame:
                     )
     
     # additional count stats
-    df_teams['POS'] = df_teams.eval('GP * POSPG') # FIBA version over counting real number of possessions
+    df_teams.eval('POS = GP * POSPG', inplace=True) # FIBA version over counting real number of possessions
     df_teams['FGA'] = (df_teams['2PTA'] + df_teams['1PTA']) # total field goals attempt
     df_teams['FGM'] = (df_teams['2PTM'] + df_teams['1PTM']) # total field goals made
     
@@ -70,7 +70,7 @@ def advanced_stats(df_teams: pd.DataFrame, season:int = 0) -> pd.DataFrame:
     
     # points distribution
     df_teams['1PTMPTS'] = df_teams.eval(' `1PTM` / PTS')
-    df_teams['2PTMPTS'] = df_teams.eval(' `2PTM` / PTS')
+    df_teams['2PTMPTS'] = df_teams.eval(' 2 * `2PTM` / PTS')
     df_teams['FTMPTS'] = df_teams.eval(' FTM / PTS')
     df_teams['DRV1PTM'] = df_teams.eval(' DRV / `1PTM`')
     
@@ -139,7 +139,7 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     
     # points distribution
     list_tuple_season_stat.append( ('1PTMPTS',  df_teams['1PTM'].sum() / df_teams['PTS'].sum()) )
-    list_tuple_season_stat.append( ('2PTMPTS', df_teams['2PTM'].sum() / df_teams['PTS'].sum()) )
+    list_tuple_season_stat.append( ('2PTMPTS', 2*df_teams['2PTM'].sum() / df_teams['PTS'].sum()) )
     list_tuple_season_stat.append( ('FTMPTS', df_teams.eval('FTM.sum() / PTS.sum()')) )
     list_tuple_season_stat.append( ('DRV1PTM', df_teams.eval('DRV.sum()') / df_teams['1PTM'].sum()) )
 
@@ -180,10 +180,10 @@ def player_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     """
     
     # points distribution
-    df['1PTMPTS'] = df.eval('1PTM / PTS')
-    df['2PTMPTS'] = df.eval('2PTM / PTS')
+    df['1PTMPTS'] = df.eval('`1PTM` / PTS')
+    df['2PTMPTS'] = df.eval('`2PTM` * 2/ PTS')
     df['FTMPTS'] = df.eval('FTM / PTS')
-    df['DRV1PTM'] = df.eval('DRV / 1PTM')
+    df['DRV1PTM'] = df.eval('DRV / `1PTM`')
     
     return df
 
