@@ -27,23 +27,23 @@ dict_womenseries = {
     2019:'https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2019/WomensSeries/FIBA3x3_Womens_Series_2019_Team_and_Player_Stats_Season_2019.xlsx'
 }
 
-def advanced_stats(df_teams: pd.DataFrame, season:int = 0) -> pd.DataFrame:
+def advanced_stats(df: pd.DataFrame, season:int = 0) -> pd.DataFrame:
     """
     Compute advanced stats for teams 
     
     Parameters
     ----------
-    df_teams: pd.DataFrame
+    df: pd.DataFrame
         dataframe with team stats from FIBA 3x3 stats website 
         e.g. https://fiba3x3cdn.blob.core.windows.net/documents/Statistics/2022/WomensSeries/FIBA_3x3_WS_Tour_Stats_After_009_Events.xlsx
 
     Returns
     -------
-    df_teams: pd.DataFrame
+    df: pd.DataFrame
         dataframe with more columns
     """
     # rename certain columns that changed after 2020 season 
-    df_teams.rename(columns={"PTA1":"1PTA", 
+    df.rename(columns={"PTA1":"1PTA", 
                             "PT1" : "1PTM",
                             "PTA2":"2PTA",
                             "PT2":"2PTM",
@@ -54,66 +54,66 @@ def advanced_stats(df_teams: pd.DataFrame, season:int = 0) -> pd.DataFrame:
                             "FT-ES" : "FTES",
                         }, inplace=True
                     )
-    col_to_drop = [x for x in ["PTA2_FGA", "2PTA/FGA", "PTA2POS"] if x in df_teams.columns]
-    df_teams.drop(columns=col_to_drop, inplace=True)
+    col_to_drop = [x for x in ["PTA2_FGA", "2PTA/FGA", "PTA2POS"] if x in df.columns]
+    df.drop(columns=col_to_drop, inplace=True)
     
     # estimated total possession for season
-    POS_estimate = df_teams['1PTM'].sum() + df_teams['2PTM'].sum() + df_teams.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') 
+    POS_estimate = df['1PTM'].sum() + df['2PTM'].sum() + df.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') 
 
     # additional count stats
-    df_teams.eval('POS = GP * POSPG', inplace=True) # FIBA version over counting real number of possessions
-    POS_FIBA = df_teams['POS'].sum()
-    df_teams['POS'] = df_teams['POS'] * POS_estimate/POS_FIBA # use a correction factor as opponent DREB is not available for computing team possessions
-    df_teams['POSPG'] = df_teams.eval('POS / GP') # recompute POSPG
-    df_teams['FGA'] = (df_teams['2PTA'] + df_teams['1PTA']) # total field goals attempt
-    df_teams['FGM'] = (df_teams['2PTM'] + df_teams['1PTM']) # total field goals made
+    df.eval('POS = GP * POSPG', inplace=True) # FIBA version over counting real number of possessions
+    POS_FIBA = df['POS'].sum()
+    df['POS'] = df['POS'] * POS_estimate/POS_FIBA # use a correction factor as opponent DREB is not available for computing team possessions
+    df['POSPG'] = df.eval('POS / GP') # recompute POSPG
+    df['FGA'] = (df['2PTA'] + df['1PTA']) # total field goals attempt
+    df['FGM'] = (df['2PTM'] + df['1PTM']) # total field goals made
     
-    df_teams['eFG'] = (df_teams['1PTM'] + 2*df_teams['2PTM'])/ df_teams['FGA'] # eFG for 3x3  
-    df_teams['OREB%'] = df_teams.eval('OREB / (FGA-FGM + (FTA-FTM)*(1-FTES/FTA))') # need to account for technical free throws, cannot compute DREB%
-    df_teams['WBLGP'] = df_teams.eval('WBL / GP') # FTA per fouled
+    df['eFG'] = (df['1PTM'] + 2*df['2PTM'])/ df['FGA'] # eFG for 3x3  
+    df['OREB%'] = df.eval('OREB / (FGA-FGM + (FTA-FTM)*(1-FTES/FTA))') # need to account for technical free throws, cannot compute DREB%
+    df['WBLGP'] = df.eval('WBL / GP') # FTA per fouled
 
     # KAS 
-    df_teams['KASTO'] = df_teams.eval('KAS / TO')
-    df_teams['KASFGM'] = df_teams.eval('KAS / FGM') # key assist to made shot ratio
+    df['KASTO'] = df.eval('KAS / TO')
+    df['KASFGM'] = df.eval('KAS / FGM') # key assist to made shot ratio
     
     # points distribution
-    df_teams['1PTMPTS'] = df_teams.eval(' `1PTM` / PTS')
-    df_teams['2PTMPTS'] = df_teams.eval(' 2 * `2PTM` / PTS')
-    df_teams['FTMPTS'] = df_teams.eval(' FTM / PTS')
-    df_teams['DRV1PTM'] = df_teams.eval(' DRV / `1PTM`')
-    df_teams['2PTAFGA'] = df_teams.eval('`2PTA` / FGA') # 2 point attempts per FGA
+    df['1PTMPTS'] = df.eval(' `1PTM` / PTS')
+    df['2PTMPTS'] = df.eval(' 2 * `2PTM` / PTS')
+    df['FTMPTS'] = df.eval(' FTM / PTS')
+    df['DRV1PTM'] = df.eval(' DRV / `1PTM`')
+    df['2PTAFGA'] = df.eval('`2PTA` / FGA') # 2 point attempts per FGA
     
     # per possession
-    df_teams['TOPOS'] = df_teams.eval('TO / POS')
-    df_teams['1PTAPOS'] = df_teams['1PTA'] / df_teams.POS
-    df_teams['2PTAPOS'] = df_teams['2PTA'] / df_teams.POS
-    df_teams['FGAPOS'] = df_teams['FGA'] / df_teams.POS
-    df_teams['PPP'] = df_teams.eval("PTS / POS")
-    df_teams['TFAPOS'] = df_teams.eval('TFA / POS') # fouled per possession
-    df_teams['FTAPOS'] = df_teams.eval('FTA / POS')
-    df_teams['TFPOS'] = df_teams.eval('TF / POS') # foul per possession
-    df_teams['FTTPOS'] = df_teams.eval('(FTA-FTES) / POS') # trip to free throw per possession
+    df['TOPOS'] = df.eval('TO / POS')
+    df['1PTAPOS'] = df['1PTA'] / df.POS
+    df['2PTAPOS'] = df['2PTA'] / df.POS
+    df['FGAPOS'] = df['FGA'] / df.POS
+    df['PPP'] = df.eval("PTS / POS")
+    df['TFAPOS'] = df.eval('TFA / POS') # fouled per possession
+    df['FTAPOS'] = df.eval('FTA / POS')
+    df['TFPOS'] = df.eval('TF / POS') # foul per possession
+    df['FTTPOS'] = df.eval('(FTA-FTES) / POS') # trip to free throw per possession
 
     # foul
-    df_teams['TOTF'] = df_teams.eval('TO / TF') # turnover to foul ratio
-    df_teams['BSTF'] = df_teams.eval('BS / TF') # blocked shots to foul ratio
+    df['TOTF'] = df.eval('TO / TF') # turnover to foul ratio
+    df['BSTF'] = df.eval('BS / TF') # blocked shots to foul ratio
     
-    df_teams['TOTFA'] = df_teams.eval('TO / TFA') # turnover to fouled ratio
-    df_teams['TFTFA'] = df_teams.eval('TF / TFA') # foul to fouled ratio
-    df_teams['FTATFA'] = df_teams.eval('FTA / TFA') # FTA per fouled
-    df_teams['FTESTFA'] = df_teams.eval('FTES / TFA') # extra free throws to fouled ratio
-    df_teams['FTMTFA'] = df_teams.eval('FTM / TFA') # free throw made to fouled ratio
-    df_teams['FTTTFA'] = df_teams.eval('(FTA-FTES) / TFA') # trip to free throw to fouled ratio
-    df_teams['FTESFTA'] = df_teams.eval('FTES / FTA') # extra FT per FTA
-    df_teams['season'] = season
+    df['TOTFA'] = df.eval('TO / TFA') # turnover to fouled ratio
+    df['TFTFA'] = df.eval('TF / TFA') # foul to fouled ratio
+    df['FTATFA'] = df.eval('FTA / TFA') # FTA per fouled
+    df['FTESTFA'] = df.eval('FTES / TFA') # extra free throws to fouled ratio
+    df['FTMTFA'] = df.eval('FTM / TFA') # free throw made to fouled ratio
+    df['FTTTFA'] = df.eval('(FTA-FTES) / TFA') # trip to free throw to fouled ratio
+    df['FTESFTA'] = df.eval('FTES / FTA') # extra FT per FTA
+    df['season'] = season
     
-    return df_teams
+    return df
 
-def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
+def season_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
     """
     Compute season advanced stats
     """
-    df_teams.rename(columns={"PTA1":"1PTA", 
+    df.rename(columns={"PTA1":"1PTA", 
                         "PT1" : "1PTM",
                         "PTA2":"2PTA",
                         "PT2":"2PTM",
@@ -124,92 +124,165 @@ def season_stats(df_teams: pd.DataFrame, season:int = 0)-> pd.DataFrame:
                         "FT-ES" : "FTES"
                     }, inplace=True
     )
-    col_to_drop = [x for x in ["PTA2_FGA", "2PTA/FGA", "PTA2POS"] if x in df_teams.columns]
-    df_teams.drop(columns=col_to_drop, inplace=True) # replace with alternatve count of 2PTA per possession
+    col_to_drop = [x for x in ["PTA2_FGA", "2PTA/FGA", "PTA2POS"] if x in df.columns]
+    df.drop(columns=col_to_drop, inplace=True) # replace with alternatve count of 2PTA per possession
 
     list_tuple_season_stat = [] # list to store tuples of stat name and stat
 
     # count stats
-    df_teams['POS'] = df_teams.eval('GP * POSPG') # FIBA over counting real number of possessions
-    POS_FIBA = df_teams['POS'].sum()
-    POS_estimate = df_teams['1PTM'].sum() + df_teams['2PTM'].sum() + df_teams.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') 
-    df_teams['POS'] = df_teams['POS'] * POS_estimate/POS_FIBA # use a correction factor as opponent DREB is not available for computing team possessions
-    df_teams['FGA'] = df_teams['2PTA'] + df_teams['1PTA'] # total field goals attempt
-    df_teams['FGM'] = df_teams['2PTM'] + df_teams['1PTM']# total field goals made
+    df['POS'] = df.eval('GP * POSPG') # FIBA over counting real number of possessions
+    POS_FIBA = df['POS'].sum()
+    POS_estimate = df['1PTM'].sum() + df['2PTM'].sum() + df.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') 
+    df['POS'] = df['POS'] * POS_estimate/POS_FIBA # use a correction factor as opponent DREB is not available for computing team possessions
+    df['FGA'] = df['2PTA'] + df['1PTA'] # total field goals attempt
+    df['FGM'] = df['2PTM'] + df['1PTM']# total field goals made
     
-    list_tuple_season_stat.append( ('GP', df_teams.eval('GP.sum()')/2) )
-    list_tuple_season_stat.append( ('POS_FIBA', df_teams.eval('POS.sum()')) )
-    list_tuple_season_stat.append( ('POS_ESTIMATE', df_teams['1PTM'].sum() + df_teams['2PTM'].sum() + df_teams.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') ) )
+    list_tuple_season_stat.append( ('GP', df.eval('GP.sum()')/2) )
+    list_tuple_season_stat.append( ('POS_FIBA', df.eval('POS.sum()')) )
+    list_tuple_season_stat.append( ('POS_ESTIMATE', df['1PTM'].sum() + df['2PTM'].sum() + df.eval('TO.sum() + DREB.sum() + (1-FTES.sum()/FTA.sum())*FTM.sum()') ) )
     
     # box score stats
-    list_tuple_season_stat.append( ('POSPG', df_teams.eval('POS.sum() / GP.sum()')) ) # used alternative definition of possession
-    list_tuple_season_stat.append( ('1PT%', df_teams['1PTM'].sum() / df_teams['1PTA'].sum()) )
-    list_tuple_season_stat.append( ('2PT%', df_teams['2PTM'].sum() / df_teams['2PTA'].sum()) )    
-    list_tuple_season_stat.append( ('FT%', df_teams.eval('FTM.sum() / FTA.sum()')) )
-    list_tuple_season_stat.append( ('eFG', (df_teams['1PTM'].sum() + 2*df_teams['2PTM'].sum())/ df_teams['FGA'].sum() ) )
-    list_tuple_season_stat.append( ('S-EFF', df_teams['PTS'].sum() / (df_teams['FTA'].sum() + df_teams['FGA'].sum() ) ) )
-    list_tuple_season_stat.append( ('S-VAL', (df_teams['PTS'].sum())**2 / (df_teams['FTA'].sum() + df_teams['FGA'].sum() ) ) )
-    list_tuple_season_stat.append( ('WBLPG', df_teams['WBL'].sum() / df_teams['GP'].sum() ) )
-    list_tuple_season_stat.append( ('PPG', df_teams['PTS'].sum() / df_teams['GP'].sum() ) )
+    list_tuple_season_stat.append( ('POSPG', df.eval('POS.sum() / GP.sum()')) ) # used alternative definition of possession
+    list_tuple_season_stat.append( ('1PT%', df['1PTM'].sum() / df['1PTA'].sum()) )
+    list_tuple_season_stat.append( ('2PT%', df['2PTM'].sum() / df['2PTA'].sum()) )    
+    list_tuple_season_stat.append( ('FT%', df.eval('FTM.sum() / FTA.sum()')) )
+    list_tuple_season_stat.append( ('eFG', (df['1PTM'].sum() + 2*df['2PTM'].sum())/ df['FGA'].sum() ) )
+    list_tuple_season_stat.append( ('S-EFF', df['PTS'].sum() / (df['FTA'].sum() + df['FGA'].sum() ) ) )
+    # list_tuple_season_stat.append( ('S-VAL', (df['PTS'].sum())**2 / (df['FTA'].sum() + df['FGA'].sum() ) ) )
+    list_tuple_season_stat.append( ('WBLPG', df['WBL'].sum() / df['GP'].sum() ) )
+    list_tuple_season_stat.append( ('PPG', df['PTS'].sum() / df['GP'].sum() ) )
 
     # rebounding stats
-    list_tuple_season_stat.append( ('OREB%', df_teams.eval('OREB.sum() / REB.sum()')) )
-    list_tuple_season_stat.append( ('DREB%', df_teams.eval('DREB.sum() / REB.sum()')) )
-    list_tuple_season_stat.append( ('FTOREB%', df_teams.eval('( OREB.sum() - (FGA.sum() - FGM.sum()) * OREB.sum() / REB.sum() ) / ( (FTA.sum()-FTM.sum())*(1 - FTES.sum()/FTA.sum()) )')) ) # need to account for technical free throws, denominator should be smaller
-    # list_tuple_season_stat.append( ('FTDREB%', df_teams.eval('( DREB.sum() - (FGA.sum() - FGM.sum()) * DREB.sum() / REB.sum() ) / ( (FTA.sum()-FTM.sum())*(1 - FTES.sum()/FTA.sum()) )')) ) # need to account for technical free throws, denominator should be smaller
+    list_tuple_season_stat.append( ('OREB%', df.eval('OREB.sum() / REB.sum()')) )
+    list_tuple_season_stat.append( ('DREB%', df.eval('DREB.sum() / REB.sum()')) )
+    list_tuple_season_stat.append( ('FTOREB%', df.eval('( OREB.sum() - (FGA.sum() - FGM.sum()) * OREB.sum() / REB.sum() ) / ( (FTA.sum()-FTM.sum())*(1 - FTES.sum()/FTA.sum()) )')) ) # need to account for technical free throws, denominator should be smaller
+    # list_tuple_season_stat.append( ('FTDREB%', df.eval('( DREB.sum() - (FGA.sum() - FGM.sum()) * DREB.sum() / REB.sum() ) / ( (FTA.sum()-FTM.sum())*(1 - FTES.sum()/FTA.sum()) )')) ) # need to account for technical free throws, denominator should be smaller
     
     # points distribution
-    list_tuple_season_stat.append( ('1PTMPTS',  df_teams['1PTM'].sum() / df_teams['PTS'].sum()) )
-    list_tuple_season_stat.append( ('2PTMPTS', 2*df_teams['2PTM'].sum() / df_teams['PTS'].sum()) )
-    list_tuple_season_stat.append( ('FTMPTS', df_teams.eval('FTM.sum() / PTS.sum()')) )
-    list_tuple_season_stat.append( ('DRV1PTM', df_teams.eval('DRV.sum()') / df_teams['1PTM'].sum()) )
-    list_tuple_season_stat.append( ('2PTAFGA', df_teams['2PTA'].sum() / df_teams['FGA'].sum()) ) # 2 point attempts per FGA
+    list_tuple_season_stat.append( ('1PTMPTS',  df['1PTM'].sum() / df['PTS'].sum()) )
+    list_tuple_season_stat.append( ('2PTMPTS', 2*df['2PTM'].sum() / df['PTS'].sum()) )
+    list_tuple_season_stat.append( ('FTMPTS', df.eval('FTM.sum() / PTS.sum()')) )
+    list_tuple_season_stat.append( ('DRV1PTM', df.eval('DRV.sum()') / df['1PTM'].sum()) )
+    list_tuple_season_stat.append( ('2PTAFGA', df['2PTA'].sum() / df['FGA'].sum()) ) # 2 point attempts per FGA
 
     # per possession stats
-    list_tuple_season_stat.append( ('TOPOS', df_teams.eval('TO.sum() / POS.sum()')) ) # turnovers
-    list_tuple_season_stat.append( ('1PTAPOS',  df_teams['1PTA'].sum() / df_teams['POS'].sum()) )
-    list_tuple_season_stat.append( ('2PTAPOS',  df_teams['2PTA'].sum() / df_teams['POS'].sum()) )
-    list_tuple_season_stat.append( ('FGAPOS', df_teams.eval('FGA.sum() / POS.sum()')) ) # FGA per possession
-    list_tuple_season_stat.append( ('PPP', df_teams.eval('PTS.sum() / POS.sum()')) )
-    list_tuple_season_stat.append( ('TFAPOS', df_teams.eval('TFA.sum() / POS.sum()')) ) # fouled per possession
-    list_tuple_season_stat.append( ('FTAPOS', df_teams.eval('FTA.sum() / POS.sum()')) ) # FTA per possession 
-    list_tuple_season_stat.append( ('TFAPOS', df_teams.eval('TFA.sum() / POS.sum()')) ) # fouled per possession
-    list_tuple_season_stat.append( ('TFPOS', df_teams.eval('TF.sum() / POS.sum()')) ) # fouls per possession
-    list_tuple_season_stat.append( ('FTTPOS', df_teams.eval('(FTA.sum() - FTES.sum())/ POS.sum()') ) ) # trip to free throw per possession
+    list_tuple_season_stat.append( ('TOPOS', df.eval('TO.sum() / POS.sum()')) ) # turnovers
+    list_tuple_season_stat.append( ('1PTAPOS',  df['1PTA'].sum() / df['POS'].sum()) )
+    list_tuple_season_stat.append( ('2PTAPOS',  df['2PTA'].sum() / df['POS'].sum()) )
+    list_tuple_season_stat.append( ('FGAPOS', df.eval('FGA.sum() / POS.sum()')) ) # FGA per possession
+    list_tuple_season_stat.append( ('PPP', df.eval('PTS.sum() / POS.sum()')) )
+    list_tuple_season_stat.append( ('TFAPOS', df.eval('TFA.sum() / POS.sum()')) ) # fouled per possession
+    list_tuple_season_stat.append( ('FTAPOS', df.eval('FTA.sum() / POS.sum()')) ) # FTA per possession 
+    list_tuple_season_stat.append( ('TFAPOS', df.eval('TFA.sum() / POS.sum()')) ) # fouled per possession
+    list_tuple_season_stat.append( ('TFPOS', df.eval('TF.sum() / POS.sum()')) ) # fouls per possession
+    list_tuple_season_stat.append( ('FTTPOS', df.eval('(FTA.sum() - FTES.sum())/ POS.sum()') ) ) # trip to free throw per possession
     # chance per possession
     
     # foul stats
-    list_tuple_season_stat.append( ('TOTF', df_teams.eval('TO.sum() / TF.sum()') ) ) # turnover to foul ratio
-    list_tuple_season_stat.append( ('BSTF', df_teams.eval('BS.sum() / TF.sum()')) ) # blocked shots to foul ratio
+    list_tuple_season_stat.append( ('TOTF', df.eval('TO.sum() / TF.sum()') ) ) # turnover to foul ratio
+    list_tuple_season_stat.append( ('BSTF', df.eval('BS.sum() / TF.sum()')) ) # blocked shots to foul ratio
     
-    list_tuple_season_stat.append( ('TOTFA', df_teams.eval('TO.sum() / TFA.sum()') ) ) # turnover to fouled ratio
-    list_tuple_season_stat.append( ('TFTFA', df_teams.eval('TF.sum() / TFA.sum()') ) ) # foul to fouled ratio
-    list_tuple_season_stat.append( ('FTATFA', df_teams.eval('FTA.sum() / TFA.sum()') ) ) # FTA to fouled ratio
-    list_tuple_season_stat.append( ('FTESTFA', df_teams.eval('FTES.sum() / TFA.sum()') ) ) # extra FTA to fouled ratio    
-    list_tuple_season_stat.append( ('FTMTFA', df_teams.eval('FTM.sum() / TFA.sum()') ) ) # free throw made to fouled ratio    
-    list_tuple_season_stat.append( ('FTTTFA', df_teams.eval('(FTA.sum() - FTES.sum())/ TFA.sum()') ) ) # free throw trips to fouled ratio
-    list_tuple_season_stat.append( ('FTESFTA', df_teams.eval('FTES.sum() / FTA.sum()') ) ) # extra FTA per FTA
+    list_tuple_season_stat.append( ('TOTFA', df.eval('TO.sum() / TFA.sum()') ) ) # turnover to fouled ratio
+    list_tuple_season_stat.append( ('TFTFA', df.eval('TF.sum() / TFA.sum()') ) ) # foul to fouled ratio
+    list_tuple_season_stat.append( ('FTATFA', df.eval('FTA.sum() / TFA.sum()') ) ) # FTA to fouled ratio
+    list_tuple_season_stat.append( ('FTESTFA', df.eval('FTES.sum() / TFA.sum()') ) ) # extra FTA to fouled ratio    
+    list_tuple_season_stat.append( ('FTMTFA', df.eval('FTM.sum() / TFA.sum()') ) ) # free throw made to fouled ratio    
+    list_tuple_season_stat.append( ('FTTTFA', df.eval('(FTA.sum() - FTES.sum())/ TFA.sum()') ) ) # free throw trips to fouled ratio
+    list_tuple_season_stat.append( ('FTESFTA', df.eval('FTES.sum() / FTA.sum()') ) ) # extra FTA per FTA
     
     # key assist
-    list_tuple_season_stat.append( ('KASTO', df_teams.eval('KAS.sum() / TO.sum()')) )
-    list_tuple_season_stat.append( ('KASFGM', df_teams.eval('KAS.sum() / FGM.sum()')) )
+    list_tuple_season_stat.append( ('KASTO', df.eval('KAS.sum() / TO.sum()')) )
+    list_tuple_season_stat.append( ('KASFGM', df.eval('KAS.sum() / FGM.sum()')) )
     
     df = pd.DataFrame({x[0]:x[1:] for x in list_tuple_season_stat})
     df['season'] = season
     return df
 
 def player_stats(df: pd.DataFrame, season:int = 0)-> pd.DataFrame:
+    """
+    Compute player advanced stats
+    """
+    # rename certain columns that changed after 2020 season 
+    df.rename(columns={ "PTA1":"1PTA", 
+                        "PT1" : "1PTM",
+                        "PTA2":"2PTA",
+                        "PT2":"2PTM",
+                        "FT":"FTM",
+                        "PTA1_TEAM":"1PTA_TEAM", 
+                        "PT1_TEAM" : "1PTM_TEAM",
+                        "PTA2_TEAM":"2PTA_TEAM",
+                        "PT2_TEAM":"2PTM_TEAM",
+                        "FT_TEAM":"FTM_TEAM",
+                        "PT1Percentage":"1PT%",
+                        "PT2Percentage" : "2PT%",
+                        "FTPercentage" : "FT%",
+                        "FT-ES" : "FTES",
+                        }, inplace=True
+                    )
+    col_to_drop = [x for x in ["PTA2_FGA", "2PTA/FGA", "PTA2POS"] if x in df.columns]
+    df.drop(columns=col_to_drop, inplace=True)
     
-    """
-    Compute season advanced stats
-    """
+    # box score
+    df['FGA'] = (df['2PTA'] + df['1PTA']) # total field goals attempt
+    df['FGA_TEAM'] = (df['2PTA_TEAM'] + df['1PTA_TEAM']) # total field goals attempt
+    df['FGM'] = (df['2PTM'] + df['1PTM']) # total field goals made
+    df['FGM_TEAM'] = (df['2PTM_TEAM'] + df['1PTM_TEAM']) # total field goals made
+    df['eFG'] = (df['1PTM'] + 2*df['2PTM'])/ df['FGA'] # eFG for 3x3  
+    # df['OREB%'] = df.eval('OREB / (FGA-FGM + (FTA-FTM)*(1-FTES/FTA))') # need to account for technical free throws, cannot compute DREB%
+    
+    # team based 
+    df['GP_TEAM%'] = df.eval('GP / GP_TEAM') # fraction of all games played
+    df['PTS_TEAM%'] = df['PTS'] / df['PTS_TEAM']
+    df['FGA_TEAM%'] = df['FGA'] / df['FGA_TEAM']
+    df['FGM_TEAM%'] = df['FGM'] / df['FGM_TEAM']
+    df['1PTM_TEAM%'] = df['1PTM'] / df['1PTM_TEAM']
+    df['1PTA_TEAM%'] = df['1PTA'] / df['1PTA_TEAM']
+    df['2PTM_TEAM%'] = df['2PTM'] / df['2PTM_TEAM']
+    df['2PTA_TEAM%'] = df['2PTA'] / df['2PTA_TEAM']
+    df['KAS_TEAM%'] = df['KAS'] / df['KAS_TEAM']
+    df['TO_TEAM%'] = df['TO'] / df['TO_TEAM']
+    df['BS_TEAM%'] = df['BS'] / df['BS_TEAM']
+    df['DRV_TEAM%'] = df['DRV'] / df['DRV_TEAM']
+    df['REB_TEAM%'] = df['REB'] / df['REB_TEAM']
+    df['OREB_TEAM%'] = df['OREB'] / df['OREB_TEAM']
+    df['DREB_TEAM%'] = df['DREB'] / df['DREB_TEAM']
+    # df['1PTA_TEAM%'] = df['1PTA'] / df['1PTA_TEAM']
+
+    # KAS 
+    df['KASTO'] = df.eval('KAS / TO')
+    # df['KASFGM'] = df.eval('KAS / FGM') # key assist to made shot ratio
     
     # points distribution
-    df['1PTMPTS'] = df.eval('`1PTM` / PTS')
-    df['2PTMPTS'] = df.eval('`2PTM` * 2/ PTS')
-    df['FTMPTS'] = df.eval('FTM / PTS')
-    df['DRV1PTM'] = df.eval('DRV / `1PTM`')
+    df['1PTMPTS'] = df.eval(' `1PTM` / PTS')
+    df['2PTMPTS'] = df.eval(' 2 * `2PTM` / PTS')
+    df['FTMPTS'] = df.eval(' FTM / PTS')
+    df['DRV1PTM'] = df.eval(' DRV / `1PTM`')
+    df['2PTAFGA'] = df.eval('`2PTA` / FGA') # 2 point attempts per FGA
     
+    # per possession
+    # df['TOPOS'] = df.eval('TO / POS')
+    # df['1PTAPOS'] = df['1PTA'] / df.POS
+    # df['2PTAPOS'] = df['2PTA'] / df.POS
+    # df['FGAPOS'] = df['FGA'] / df.POS
+    # df['PPP'] = df.eval("PTS / POS")
+    # df['TFAPOS'] = df.eval('TFA / POS') # fouled per possession
+    # df['FTAPOS'] = df.eval('FTA / POS')
+    # df['TFPOS'] = df.eval('TF / POS') # foul per possession
+    # df['FTTPOS'] = df.eval('(FTA-FTES) / POS') # trip to free throw per possession
+
+    # foul
+    # df['TOTF'] = df.eval('TO / TF') # turnover to foul ratio
+    # df['BSTF'] = df.eval('BS / TF') # blocked shots to foul ratio
+    
+    # df['TOTFA'] = df.eval('TO / TFA') # turnover to fouled ratio
+    # df['TFTFA'] = df.eval('TF / TFA') # foul to fouled ratio
+    # df['FTATFA'] = df.eval('FTA / TFA') # FTA per fouled
+    # df['FTESTFA'] = df.eval('FTES / TFA') # extra free throws to fouled ratio
+    # df['FTMTFA'] = df.eval('FTM / TFA') # free throw made to fouled ratio
+    # df['FTTTFA'] = df.eval('(FTA-FTES) / TFA') # trip to free throw to fouled ratio
+    # df['FTESFTA'] = df.eval('FTES / FTA') # extra FT per FTA
+    
+    df['season'] = season
     return df
 
 def make_df_multiple_season_stat(dict_:dict, seasons:List[int], tour_type:str) -> pd.DataFrame:
