@@ -70,7 +70,7 @@ def advanced_stats(df: pd.DataFrame, season:int = 0) -> pd.DataFrame:
     
     df['eFG'] = (df['1PTM'] + 2*df['2PTM'])/ df['FGA'] # eFG for 3x3  
     df['OREB%'] = df.eval('OREB / (FGA-FGM + (FTA-FTM)*(1-FTES/FTA))') # need to account for technical free throws, cannot compute DREB%
-    df['WBLGP'] = df.eval('WBL / GP') # FTA per fouled
+    df['WBLPG'] = df.eval('WBL / GP') 
 
     # KAS 
     df['KASTO'] = df.eval('KAS / TO')
